@@ -21,18 +21,19 @@ const useAuth = () => {
     gestPersonal: false,
     gestPagos: false,
     reportes: false,
+    config: false,
   });
 
-  const [listaPersoanal, setListaPersoanal] = useState(null);
+  const [listaPersonal, setListaPersonal] = useState(null);
 
   async function obtenerUsuarios() {
     try {
       const response = await getUsersListService();
       console.log("response ", response);
       if (response && response.length > 0) {
-        setListaPersoanal(response);
+        setListaPersonal(response);
       } else {
-        setListaPersoanal([]);
+        setListaPersonal([]);
       }
     } catch (error) {
       console.log("====================================");
@@ -60,8 +61,8 @@ const useAuth = () => {
     setLogin,
     ctrlMenuView,
     setCtrlMenuView,
-    listaPersoanal,
-    setListaPersoanal,
+    listaPersonal,
+    setListaPersonal,
     obtenerUsuarios,
   };
 };

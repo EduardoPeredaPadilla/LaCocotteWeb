@@ -40,9 +40,9 @@ export async function getUsersListService() {
       activeDay: false,
       horaEntrada: "",
       horaSalida: "",
-      hrsExtras: 0,
+      hrsExt: 0,
       pagoTurno: 0,
-      pagoHrsExtras: 0,
+      pagoHrsExtra: 0,
       pagoTotalDia: 0,
     };
     usersList.push(userAux);

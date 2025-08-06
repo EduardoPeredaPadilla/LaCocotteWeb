@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
     setLogin,
     ctrlMenuView,
     setCtrlMenuView,
-    listaPersoanal,
-    setListaPersoanal,
+    listaPersonal,
+    setListaPersonal,
     obtenerUsuarios,
   } = useAuth();
 
@@ -26,8 +26,8 @@ export function AuthProvider({ children }) {
         setLogin,
         ctrlMenuView,
         setCtrlMenuView,
-        listaPersoanal,
-        setListaPersoanal,
+        listaPersonal,
+        setListaPersonal,
         obtenerUsuarios,
       }}
     >

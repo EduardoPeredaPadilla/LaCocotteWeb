@@ -70,13 +70,14 @@ const Login = () => {
             Ingresar
           </button>
         </form>
-        <div
+        <div className="logo_index"></div>
+        {/* <div
           className="login-imgs-error-container hidden"
           id="chancla-cont"
-        ></div>
+        ></div> */}
       </div>
       <div className="walda-container">
-        <div className="logo_index"></div>
+        {/* <div className="logo_index"></div> */}
         <img
           src="/src/img/walda2.png"
           className="walda-img"

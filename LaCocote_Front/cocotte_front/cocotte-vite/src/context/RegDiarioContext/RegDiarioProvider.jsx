@@ -8,6 +8,11 @@ export function RegDiarioProvider({ children }) {
     setSelectedFecha,
     horariosTurnoTarde,
     setHorariosTurnoTarde,
+    getResumenesDiarios,
+    resDiarioSelected,
+    setResDiarioSelected,
+    personalDelResumen,
+    setPersonalDelResumen,
   } = useRegDiario();
 
   return (
@@ -17,6 +22,11 @@ export function RegDiarioProvider({ children }) {
         setSelectedFecha,
         horariosTurnoTarde,
         setHorariosTurnoTarde,
+        getResumenesDiarios,
+        resDiarioSelected,
+        setResDiarioSelected,
+        personalDelResumen,
+        setPersonalDelResumen,
       }}
     >
       {children}

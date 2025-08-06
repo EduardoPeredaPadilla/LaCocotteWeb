@@ -33,7 +33,7 @@ app.post("/auth/login", async (req, res) => {
         .json({ message: "Usuario no autorizado para ingresar" });
     }
 
-    console.log("user ", user);
+    // console.log("user ", user);
 
     // Compara la contraseña usando bcrypt
     const valid = await bcrypt.compare(pass, user.pass);
@@ -135,13 +135,279 @@ app.get("/users", async (req, res) => {
   // Solo admin puede ver la lista
   try {
     const users = await db.any(
-      "SELECT id_user,user_name,user_alias,admin,auth,user_rol,email FROM users"
+      "SELECT id_user,user_name,user_alias,admin,auth,user_rol,email, fecha_ing FROM users ORDER BY user_name"
     );
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: "Error en el servidor" });
   }
 });
+
+// Endpoint para obtener los resumen diario
+app.get("/resumen-diario", async (req, res) => {
+  // Solo admin puede ver la lista
+  try {
+    const resumenes_diario = await db.any(
+      "SELECT * FROM public.resumen_diario ORDER BY fecha DESC"
+    );
+    res.json(resumenes_diario);
+  } catch (err) {
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+});
+
+// Endpoint para regitro resumen diario
+app.post("/resumen-diario", async (req, res) => {
+  const {
+    fecha,
+    total_personal,
+    personal_dia,
+    pago_turno,
+    pago_hrs_ext,
+    status_laborable,
+    status_festivo,
+  } = req.body;
+  try {
+    // Insertar y devolver el id_rd generado
+    const result = await db.one(
+      `INSERT INTO resumen_diario
+        (fecha, total_personal, personal_dia, pago_turno, pago_hrs_ext, status_laborable, status_festivo)
+       VALUES (
+        $1::date,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+      ) RETURNING id_rd`,
+      [
+        fecha,
+        total_personal,
+        personal_dia,
+        pago_turno,
+        pago_hrs_ext,
+        status_laborable,
+        status_festivo,
+      ]
+    );
+    res.status(201).json({
+      message: "Registro agregado correctamente",
+      id_rd: result.id_rd,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error al agregar el registro" });
+  }
+});
+// app.post("/resumen-diario", async (req, res) => {
+//   const { fecha, total_personal, personal_dia, pago_turno, pago_hrs_ext } =
+//     req.body;
+//   try {
+//     // fecha debe llegar como string 'YYYY-MM-DD'
+//     await db.none(
+//       `INSERT INTO resumen_diario
+//         (fecha, total_personal, personal_dia, pago_turno, pago_hrs_ext)
+//        VALUES (
+//         $1::date,
+//         $2,
+//         $3,
+//         $4,
+//         $5
+//       )`,
+//       [fecha, total_personal, personal_dia, pago_turno, pago_hrs_ext]
+//     );
+//     res.status(201).json({ message: "Registro agregado correctamente" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Error al agregar el registro" });
+//   }
+// });
+
+// ...existing code...
+
+app.post("/reg-diario-pers", async (req, res) => {
+  const {
+    id_rd,
+    fecha,
+    nombre,
+    hr_entrada,
+    hr_salida,
+    hrs_extras,
+    pago_turno,
+    pago_hrs_ext,
+  } = req.body;
+  try {
+    await db.none(
+      `INSERT INTO reg_diario_pers
+        (id_rd, fecha, nombre, hr_entrada, hr_salida, hrs_extras, pago_turno, pago_hrs_ext)
+       VALUES (
+        $1,
+        $2::date,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8
+      )`,
+      [
+        id_rd,
+        fecha,
+        nombre,
+        hr_entrada,
+        hr_salida,
+        hrs_extras,
+        pago_turno,
+        pago_hrs_ext,
+      ]
+    );
+    res
+      .status(201)
+      .json({ message: "Registro de personal agregado correctamente" });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ message: "Error al agregar el registro de personal" });
+  }
+});
+
+// Obtener registros de personal por id_rd
+app.get("/reg-diario-pers/:id_rd", async (req, res) => {
+  const { id_rd } = req.params;
+  try {
+    const registros = await db.any(
+      "SELECT * FROM reg_diario_pers WHERE id_rd = $1 ORDER BY nombre",
+      [id_rd]
+    );
+    res.json(registros);
+  } catch (err) {
+    res.status(500).json({ message: "Error al obtener registros de personal" });
+  }
+});
+
+// Endpoint para obtener los turnos
+app.get("/pagos", async (req, res) => {
+  // Solo admin puede ver la lista
+  try {
+    const pagos = await db.any("SELECT * FROM public.pagos ORDER BY id_pago");
+    res.json(pagos);
+  } catch (err) {
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+});
+
+// Endpoint para obtener los turnos de un periodo
+app.get("/pagos-by-user-period", async (req, res) => {
+  const { user_alias, periodo } = req.query;
+  console.log("INICIO DE PAGOS BY USER PERIOD");
+  console.log("user_alias :", user_alias);
+  console.log("periodo :", periodo);
+
+  try {
+    const pagos = await db.any(
+      // "SELECT * FROM public.pagos ORDER BY id_pago"
+      `SELECT * FROM pagos 
+       WHERE nombre = $1 
+         AND periodo >= $2 
+       ORDER BY fecha`,
+      [user_alias, periodo]
+    );
+    console.log("PAGOS OBTENIDOS:", pagos);
+    console.log("PAGOS OBTENIDOS length:", pagos.length);
+    console.log("FIN DE PAGOS BY USER PERIOD");
+    res.json(pagos);
+  } catch (err) {
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+});
+
+// Endpoint para obtener los pagos
+app.get("/turnos", async (req, res) => {
+  // Solo admin puede ver la lista
+  try {
+    const turnos = await db.any(
+      "SELECT * FROM public.turnos ORDER BY id_turno"
+    );
+    res.json(turnos);
+  } catch (err) {
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+});
+
+// ...existing code...
+// Endpoint para reg diario de una persona
+app.get("/reg-diario-pers-by-user", async (req, res) => {
+  const { user_alias, fecha_inicio, fecha_fin } = req.query;
+  try {
+    const registros = await db.any(
+      // `SELECT * FROM reg_diario_pers
+      `SELECT * FROM vw_reg_diario_pers 
+       WHERE nombre = $1 
+         AND fecha >= $2::date 
+         AND fecha <= $3::date
+       ORDER BY fecha`,
+      [user_alias, fecha_inicio, fecha_fin]
+    );
+    res.json(registros);
+  } catch (err) {
+    res.status(500).json({ message: "Error al obtener registros de personal" });
+  }
+});
+
+// Pagos
+app.post("/pagos", async (req, res) => {
+  const {
+    id_user,
+    fecha,
+    nombre,
+    periodo,
+    total_dias,
+    tot_fest_lab,
+    tot_fest_noLab,
+    total_pago_salarios,
+    total_pago_hrsext,
+    total_pago_primdom,
+    total_pago_fest_lab,
+    total_pago_fest_nolab,
+    pago_total,
+    observs,
+  } = req.body;
+
+  try {
+    await db.none(
+      `INSERT INTO pagos (
+        id_user, fecha, nombre, periodo, total_dias, tot_fest_lab, tot_fest_noLab,
+        total_pago_salarios, total_pago_hrsext, total_pago_primdom,
+        total_pago_fest_lab, total_pago_fest_nolab, pago_total, observs
+      ) VALUES (
+        $1, $2::date, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+      )`,
+      [
+        id_user,
+        fecha,
+        nombre,
+        periodo,
+        total_dias,
+        tot_fest_lab,
+        tot_fest_noLab,
+        total_pago_salarios,
+        total_pago_hrsext,
+        total_pago_primdom,
+        total_pago_fest_lab,
+        total_pago_fest_nolab,
+        pago_total,
+        observs,
+      ]
+    );
+    res.status(201).json({ message: "Pago registrado correctamente" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error al registrar el pago" });
+  }
+});
+// ...existing code...
 
 app.listen(3001, () => {
   console.log("Server is running on port 3001");
